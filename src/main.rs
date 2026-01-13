@@ -12,6 +12,12 @@ struct ChessBoard {
     black_bishop: u64,
     black_knight: u64,
     black_pawn: u64,
+
+    is_white_to_play: bool,
+    white_king_side_castle: bool,
+    white_queen_side_castle: bool,
+    black_king_side_castle: bool,
+    black_queen_side_castle: bool,
 }
 
 fn get_starting_chessboard() -> ChessBoard {
@@ -28,11 +34,17 @@ fn get_starting_chessboard() -> ChessBoard {
         black_bishop: 36,
         black_knight: 66,
         black_pawn: 65280,
+        is_white_to_play: true,
+        white_king_side_castle: true,
+        white_queen_side_castle: true,
+        black_king_side_castle: true,
+        black_queen_side_castle: true,
     };
 }
 
 impl ChessBoard {
     fn get_fen(&self) -> String {
+        // board
         let mut fen_board = String::new();
         for i in 0..64 {
             if self.white_king & (1 << i) != 0 {
@@ -66,7 +78,34 @@ impl ChessBoard {
                 fen_board.push_str("/");
             }
         }
-        fen_board
+        fen_board = fen_board
+            .replace("11111111", "8")
+            .replace("1111111", "7")
+            .replace("111111", "6")
+            .replace("11111", "5")
+            .replace("1111", "4")
+            .replace("111", "3")
+            .replace("11", "2");
+
+        // player turn
+        let fen_player_turn = String::from(if self.is_white_to_play { "w" } else { "b" });
+
+        // castles
+        let mut fen_castles = String::new();
+        if self.white_king_side_castle {
+            fen_castles.push_str("K");
+        }
+        if self.white_queen_side_castle {
+            fen_castles.push_str("Q");
+        }
+        if self.black_king_side_castle {
+            fen_castles.push_str("k");
+        }
+        if self.black_queen_side_castle {
+            fen_castles.push_str("q");
+        }
+
+        fen_board + " " + &fen_player_turn + " " + &fen_castles
     }
 }
 
