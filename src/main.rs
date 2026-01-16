@@ -144,31 +144,34 @@ impl ChessBoard {
         fen_board + " " + &fen_player_turn + " " + &fen_castles
     }
 
-    fn get_rook_moves(&self, index: u8, ma: &binary_mask::MainHashtables) {
+    fn get_rook_moves(&self, index: u8, ma: &binary_mask::MainHashtables) -> u64 {
         let square_mask = &ma.rook_moves_masks_magical_numbers[index as usize].mask;
         let magical_number = &ma.rook_moves_masks_magical_numbers[index as usize].magic_number;
         let board = self.white | self.black;
         let hashkey = (board & square_mask).wrapping_mul(*magical_number) >> 48;
         let rook_moves = ma.rook_mask_blockers_hashmaps[index as usize][hashkey as usize].unwrap();
-        println!("rook");
-        binary_mask::print_mask(rook_moves & self.white ^ rook_moves);
+        //println!("rook");
+        //binary_mask::print_mask(rook_moves & self.white ^ rook_moves);
+        rook_moves & self.white ^ rook_moves
     }
 
-    fn get_bishop_moves(&self, index: u8, ma: &binary_mask::MainHashtables) {
+    fn get_bishop_moves(&self, index: u8, ma: &binary_mask::MainHashtables) -> u64 {
         let square_mask = &ma.bishop_moves_masks_magical_numbers[index as usize].mask;
         let magical_number = &ma.bishop_moves_masks_magical_numbers[index as usize].magic_number;
         let board = self.white | self.black;
         let hashkey = (board & square_mask).wrapping_mul(*magical_number) >> 48;
         let bishop_moves =
             ma.bishop_mask_blockers_hashmaps[index as usize][hashkey as usize].unwrap();
-        println!("bishop");
-        binary_mask::print_mask(bishop_moves & self.white ^ bishop_moves);
+        //println!("bishop");
+        //binary_mask::print_mask(bishop_moves & self.white ^ bishop_moves);
+        bishop_moves & self.white ^ bishop_moves
     }
 
-    fn get_knight_moves(&self, index: u8) {
-        let knight_moves = binary_mask::get_knight_moves_masks()[index as usize];
-        println!("knight");
-        binary_mask::print_mask(knight_moves & self.white ^ knight_moves);
+    fn get_knight_moves(&self, index: u8, ma: &binary_mask::MainHashtables) -> u64 {
+        let knight_moves = ma.knight_move_masks[index as usize];
+        //println!("knight");
+        //binary_mask::print_mask(knight_moves & self.white ^ knight_moves);
+        knight_moves & self.white ^ knight_moves
     }
 
     fn get_moves(&self, ma: binary_mask::MainHashtables) {
@@ -188,7 +191,7 @@ impl ChessBoard {
             } else if index & pieces.bishops != 0 {
                 self.get_bishop_moves(i, &ma);
             } else if index & pieces.knights != 0 {
-                self.get_knight_moves(i);
+                self.get_knight_moves(i, &ma);
             } else if index & pieces.queens != 0 {
             }
         }
