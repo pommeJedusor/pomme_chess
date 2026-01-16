@@ -1,0 +1,146 @@
+use std::usize;
+
+#[derive(Debug)]
+pub struct MagicEntry {
+    pub mask: u64,
+    pub magic_number: u64,
+}
+
+pub fn get_rock_moves_masks() -> [u64; 64] {
+    let mut moves: [u64; 64] = [0; 64];
+    for i in 0..64 {
+        let mut rock_moves = 0;
+        let x = i % 8;
+        let y = i / 8;
+
+        for j in 1..7 {
+            if j != x {
+                rock_moves |= 1 << (j + y * 8);
+            }
+            if j != y {
+                rock_moves |= 1 << (x + j * 8);
+            }
+        }
+        moves[i] = rock_moves;
+    }
+    moves
+}
+
+pub fn get_rock_moves_masks_collision(index: usize, mask: &u64) -> u64 {
+    let x = index as u16 % 8;
+    let y = index as u16 / 8;
+    let mut collision_mask = 0;
+    let left = (0..x)
+        .filter(|x| 1 << (y * 8 + x) & mask != 0)
+        .max()
+        .unwrap_or(0);
+    let right = ((x + 1)..8)
+        .filter(|x| 1 << (y * 8 + x) & mask != 0)
+        .min()
+        .unwrap_or(7);
+    let top = (0..y)
+        .filter(|y| 1 << (y * 8 + x) & mask != 0)
+        .max()
+        .unwrap_or(0);
+    let bottom = ((y + 1)..8)
+        .filter(|y| 1 << (y * 8 + x) & mask != 0)
+        .min()
+        .unwrap_or(7);
+    for i in left..x {
+        collision_mask |= 1 << (y * 8 + i);
+    }
+    for i in (x + 1)..=right {
+        collision_mask |= 1 << (y * 8 + i);
+    }
+    for i in top..y {
+        collision_mask |= 1 << (i * 8 + x);
+    }
+    for i in (y + 1)..=bottom {
+        collision_mask |= 1 << (i * 8 + x);
+    }
+    collision_mask
+}
+
+pub fn get_rock_moves_masks_magical_numbers(
+    mask_blockers_hashmaps: &mut Vec<Vec<Option<u64>>>,
+) -> [MagicEntry; 64] {
+    assert!(mask_blockers_hashmaps.len() == 64 && mask_blockers_hashmaps[0].len() == 65536);
+    let mut magical_numbers: [Option<MagicEntry>; 64] = [const { None }; 64];
+    let moves_masks = get_rock_moves_masks();
+    for (i, moves_mask) in moves_masks.iter().enumerate() {
+        // get mask indexes
+        let mut mask_indexes: [u8; 12] = [0; 12];
+        for (j, index) in (0..64).filter(|x| 1 << x & moves_mask != 0).enumerate() {
+            assert!(j < 12);
+            mask_indexes[j] = index;
+        }
+
+        // get mask blockers
+        let mut mask_blockers: [u64; 4096] = [0; 4096];
+        for j in 0..4096 {
+            let mut mask_blocker = 0;
+            for (k, index) in mask_indexes.iter().enumerate() {
+                if 1 << k & j != 0 {
+                    mask_blocker |= 1 << index;
+                }
+            }
+            mask_blockers[j] = mask_blocker;
+        }
+
+        // find magic number
+        while true {
+            let j = rand::random_range(0..=18446744073709551615)
+                & rand::random_range(0..=18446744073709551615)
+                & rand::random_range(0..=18446744073709551615);
+            let mut is_valid = true;
+            for mask_blocker in mask_blockers.iter() {
+                let hashkey = mask_blocker.wrapping_mul(j) >> 48;
+                let colision = get_rock_moves_masks_collision(i, mask_blocker);
+                if mask_blockers_hashmaps[i][hashkey as usize].is_some_and(|x| x != colision) {
+                    is_valid = false;
+                    break;
+                }
+                mask_blockers_hashmaps[i][hashkey as usize] = Some(colision);
+            }
+            if is_valid {
+                magical_numbers[i] = Some(MagicEntry {
+                    mask: *moves_mask,
+                    magic_number: j,
+                });
+                break;
+            }
+            // reset mask_blockers_hashmaps
+            for j in 0..65536 {
+                mask_blockers_hashmaps[i][j] = None;
+            }
+        }
+    }
+    magical_numbers.map(|x| x.unwrap())
+}
+
+pub fn get_bishop_moves_masks() -> [u64; 64] {
+    let mut moves: [u64; 64] = [0; 64];
+    for i in 0..64 {
+        let mut bishop_moves = 0;
+        let x = i % 8;
+        let y = i / 8;
+
+        for j in 1..7 {
+            if j < x && j < y {
+                bishop_moves |= 1 << ((y - j) * 8 + x - j);
+            }
+            if j + x < 7 && j + y < 7 {
+                bishop_moves |= 1 << ((y + j) * 8 + x + j);
+            }
+            if j < x && j + y < 7 {
+                bishop_moves |= 1 << ((y + j) * 8 + x - j);
+            }
+            if j + x < 7 && j < y {
+                bishop_moves |= 1 << ((y - j) * 8 + x + j);
+            }
+        }
+        moves[i] = bishop_moves;
+        break;
+    }
+    moves
+}
