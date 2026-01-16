@@ -27,21 +27,21 @@ struct ChessBoard {
 
 fn get_starting_chessboard() -> ChessBoard {
     return ChessBoard {
-        white: 68853694464,
-        black: 0,
+        white: 34661728256,
+        black: 72567767433218,
         white_pieces: ColorPieces {
             king: 0,
             queens: 0,
-            rooks: 0,
-            bishops: 68853694464,
-            knights: 0,
+            rooks: 33554432,
+            bishops: 268435456,
+            knights: 34359738368,
             pawns: 0,
         },
         black_pieces: ColorPieces {
             king: 0,
             queens: 0,
-            rooks: 0,
-            bishops: 0,
+            rooks: 72567767433216,
+            bishops: 2,
             knights: 0,
             pawns: 0,
         },
@@ -144,40 +144,34 @@ impl ChessBoard {
         fen_board + " " + &fen_player_turn + " " + &fen_castles
     }
 
-    fn get_rook_moves(
-        &self,
-        index: u8,
-        rook_moves_masks_magical_numbers: &[MagicEntry; 64],
-        mask_blockers_hashmaps: &Vec<Vec<Option<u64>>>,
-    ) {
-        let square_mask = &rook_moves_masks_magical_numbers[index as usize].mask;
-        let magical_number = &rook_moves_masks_magical_numbers[index as usize].magic_number;
+    fn get_rook_moves(&self, index: u8, ma: &binary_mask::MainHashtables) {
+        let square_mask = &ma.rook_moves_masks_magical_numbers[index as usize].mask;
+        let magical_number = &ma.rook_moves_masks_magical_numbers[index as usize].magic_number;
         let board = self.white | self.black;
         let hashkey = (board & square_mask).wrapping_mul(*magical_number) >> 48;
-        let rook_moves = mask_blockers_hashmaps[index as usize][hashkey as usize].unwrap();
-        println!("{}", rook_moves & board ^ rook_moves);
+        let rook_moves = ma.rook_mask_blockers_hashmaps[index as usize][hashkey as usize].unwrap();
+        println!("rook");
+        binary_mask::print_mask(rook_moves & self.white ^ rook_moves);
     }
 
-    fn get_bishop_moves(
-        &self,
-        index: u8,
-        bishop_moves_masks_magical_numbers: &[MagicEntry; 64],
-        mask_blockers_hashmaps: &Vec<Vec<Option<u64>>>,
-    ) {
-        let square_mask = &bishop_moves_masks_magical_numbers[index as usize].mask;
-        let magical_number = &bishop_moves_masks_magical_numbers[index as usize].magic_number;
+    fn get_bishop_moves(&self, index: u8, ma: &binary_mask::MainHashtables) {
+        let square_mask = &ma.bishop_moves_masks_magical_numbers[index as usize].mask;
+        let magical_number = &ma.bishop_moves_masks_magical_numbers[index as usize].magic_number;
         let board = self.white | self.black;
         let hashkey = (board & square_mask).wrapping_mul(*magical_number) >> 48;
-        let bishop_moves = mask_blockers_hashmaps[index as usize][hashkey as usize].unwrap();
-        binary_mask::print_mask(bishop_moves & board ^ bishop_moves);
-        println!("");
+        let bishop_moves =
+            ma.bishop_mask_blockers_hashmaps[index as usize][hashkey as usize].unwrap();
+        println!("bishop");
+        binary_mask::print_mask(bishop_moves & self.white ^ bishop_moves);
     }
 
-    fn get_moves(
-        &self,
-        rook_moves_masks_magical_numbers: &[MagicEntry; 64],
-        mask_blockers_hashmaps: &Vec<Vec<Option<u64>>>,
-    ) {
+    fn get_knight_moves(&self, index: u8) {
+        let knight_moves = binary_mask::get_knight_moves_masks()[index as usize];
+        println!("knight");
+        binary_mask::print_mask(knight_moves & self.white ^ knight_moves);
+    }
+
+    fn get_moves(&self, ma: binary_mask::MainHashtables) {
         let pieces = if self.is_white_to_play {
             &self.white_pieces
         } else {
@@ -185,22 +179,16 @@ impl ChessBoard {
         };
 
         for i in 0..64 {
+            // TODO continue; if square unoccupied by current player
             let index = 1 << i;
             if index & pieces.pawns != 0 {
             } else if index & pieces.king != 0 {
             } else if index & pieces.rooks != 0 {
-                self.get_rook_moves(
-                    i,
-                    &rook_moves_masks_magical_numbers,
-                    &mask_blockers_hashmaps,
-                );
+                self.get_rook_moves(i, &ma);
             } else if index & pieces.bishops != 0 {
-                self.get_bishop_moves(
-                    i,
-                    &rook_moves_masks_magical_numbers,
-                    &mask_blockers_hashmaps,
-                );
+                self.get_bishop_moves(i, &ma);
             } else if index & pieces.knights != 0 {
+                self.get_knight_moves(i);
             } else if index & pieces.queens != 0 {
             }
         }
@@ -208,24 +196,7 @@ impl ChessBoard {
 }
 
 fn main() {
-    // get rook moves
-    //let mut mask_blockers_hashmaps: Vec<Vec<Option<u64>>> = vec![vec![None; 65536]; 64];
-    //println!("generating rook magical numbers");
-    //let rook_moves_masks_magical_numbers =
-    //    binary_mask::get_rook_moves_masks_magical_numbers(&mut mask_blockers_hashmaps);
-    //println!("generated rook magical numbers");
-    //let mut chess_board = get_starting_chessboard();
-    //chess_board.get_moves(&rook_moves_masks_magical_numbers, &mask_blockers_hashmaps);
-    //
-    // get bishop moves
-    //let x = binary_mask::get_bishop_moves_masks_collision(36, &68853694464);
-    //let x = binary_mask::get_bishop_moves_masks();
-    //binary_mask::print_mask(x[1]);
-    let mut mask_blockers_hashmaps: Vec<Vec<Option<u64>>> = vec![vec![None; 65536]; 64];
-    println!("generating bishop magical numbers");
-    let bishop_moves_masks_magical_numbers =
-        binary_mask::get_bishop_moves_masks_magical_numbers(&mut mask_blockers_hashmaps);
-    println!("generated bishop magical numbers");
-    let mut chess_board = get_starting_chessboard();
-    chess_board.get_moves(&bishop_moves_masks_magical_numbers, &mask_blockers_hashmaps);
+    let ma = binary_mask::generate_main_hashtables();
+    let chessboard = get_starting_chessboard();
+    chessboard.get_moves(ma);
 }

@@ -1,5 +1,13 @@
 use std::usize;
 
+pub struct MainHashtables {
+    pub rook_mask_blockers_hashmaps: Vec<Vec<Option<u64>>>,
+    pub rook_moves_masks_magical_numbers: [MagicEntry; 64],
+    pub bishop_mask_blockers_hashmaps: Vec<Vec<Option<u64>>>,
+    pub bishop_moves_masks_magical_numbers: [MagicEntry; 64],
+    pub knight_move_masks: [u64; 64],
+}
+
 #[derive(Debug)]
 pub struct MagicEntry {
     pub mask: u64,
@@ -246,6 +254,48 @@ pub fn get_bishop_moves_masks_magical_numbers(
         }
     }
     magical_numbers.map(|x| x.unwrap())
+}
+
+pub fn get_knight_moves_masks() -> [u64; 64] {
+    let mut moves: [u64; 64] = [0; 64];
+    for i in 0..64 {
+        let mut knight_moves = 0;
+        let x: i32 = i as i32 % 8;
+        let y: i32 = i as i32 / 8;
+
+        for (xa, ya) in [
+            (1, 2),
+            (2, 1),
+            (-1, -2),
+            (-2, -1),
+            (-1, 2),
+            (-2, 1),
+            (1, -2),
+            (2, -1),
+        ] {
+            if 0 <= x + xa && x + xa < 8 && 0 <= y + ya && y + ya < 8 {
+                knight_moves |= 1 << (y + ya) * 8 + x + xa;
+            }
+        }
+        moves[i] = knight_moves;
+    }
+    moves
+}
+
+pub fn generate_main_hashtables() -> MainHashtables {
+    let mut rook_mask_blockers_hashmaps: Vec<Vec<Option<u64>>> = vec![vec![None; 65536]; 64];
+    let rook_moves_masks_magical_numbers =
+        get_rook_moves_masks_magical_numbers(&mut rook_mask_blockers_hashmaps);
+    let mut bishop_mask_blockers_hashmaps: Vec<Vec<Option<u64>>> = vec![vec![None; 65536]; 64];
+    let bishop_moves_masks_magical_numbers =
+        get_bishop_moves_masks_magical_numbers(&mut bishop_mask_blockers_hashmaps);
+    MainHashtables {
+        rook_mask_blockers_hashmaps: rook_mask_blockers_hashmaps,
+        rook_moves_masks_magical_numbers: rook_moves_masks_magical_numbers,
+        bishop_mask_blockers_hashmaps: bishop_mask_blockers_hashmaps,
+        bishop_moves_masks_magical_numbers: bishop_moves_masks_magical_numbers,
+        knight_move_masks: get_knight_moves_masks(),
+    }
 }
 
 pub fn print_mask(mask: u64) {
