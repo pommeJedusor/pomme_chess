@@ -140,7 +140,119 @@ pub fn get_bishop_moves_masks() -> [u64; 64] {
             }
         }
         moves[i] = bishop_moves;
-        break;
     }
     moves
+}
+
+pub fn get_bishop_moves_masks_collision(index: usize, mask: &u64) -> u64 {
+    let x = index as u16 % 8;
+    let y = index as u16 / 8;
+    let mut collision_mask = 0;
+    // top left
+    let mut i = 1;
+    while x >= i && y >= i {
+        let square_index = (y - i) * 8 + x - i;
+        if 1 << square_index & mask != 0 {
+            break;
+        }
+        collision_mask |= 1 << square_index;
+        i += 1;
+    }
+    // top right
+    let mut i = 1;
+    while x + i <= 7 && y >= i {
+        let square_index = (y - i) * 8 + x + i;
+        if 1 << square_index & mask != 0 {
+            break;
+        }
+        collision_mask |= 1 << square_index;
+        i += 1;
+    }
+    // bottom left
+    let mut i = 1;
+    while x >= i && y + i <= 7 {
+        let square_index = (y + i) * 8 + x - i;
+        if 1 << square_index & mask != 0 {
+            break;
+        }
+        collision_mask |= 1 << square_index;
+        i += 1;
+    }
+    // top right
+    let mut i = 1;
+    while x + i <= 7 && y + i <= 7 {
+        let square_index = (y + i) * 8 + x + i;
+        if 1 << square_index & mask != 0 {
+            break;
+        }
+        collision_mask |= 1 << square_index;
+        i += 1;
+    }
+    collision_mask
+}
+
+pub fn get_bishop_moves_masks_magical_numbers(
+    mask_blockers_hashmaps: &mut Vec<Vec<Option<u64>>>,
+) -> [MagicEntry; 64] {
+    assert!(mask_blockers_hashmaps.len() == 64 && mask_blockers_hashmaps[0].len() == 65536);
+    let mut magical_numbers: [Option<MagicEntry>; 64] = [const { None }; 64];
+    let moves_masks = get_bishop_moves_masks();
+    for (i, moves_mask) in moves_masks.iter().enumerate() {
+        // get mask indexes
+        let mut mask_indexes: [u8; 13] = [0; 13];
+        for (j, index) in (0..64).filter(|x| 1 << x & moves_mask != 0).enumerate() {
+            assert!(j < 13);
+            mask_indexes[j] = index;
+        }
+
+        // get mask blockers
+        let mut mask_blockers: [u64; 4096] = [0; 4096];
+        for j in 0..4096 {
+            let mut mask_blocker = 0;
+            for (k, index) in mask_indexes.iter().enumerate() {
+                if 1 << k & j != 0 {
+                    mask_blocker |= 1 << index;
+                }
+            }
+            mask_blockers[j] = mask_blocker;
+        }
+
+        // find magic number
+        while true {
+            let j = rand::random_range(0..=18446744073709551615)
+                & rand::random_range(0..=18446744073709551615)
+                & rand::random_range(0..=18446744073709551615);
+            let mut is_valid = true;
+            for mask_blocker in mask_blockers.iter() {
+                let hashkey = mask_blocker.wrapping_mul(j) >> 48;
+                let colision = get_bishop_moves_masks_collision(i, mask_blocker);
+                if mask_blockers_hashmaps[i][hashkey as usize].is_some_and(|x| x != colision) {
+                    is_valid = false;
+                    break;
+                }
+                mask_blockers_hashmaps[i][hashkey as usize] = Some(colision);
+            }
+            if is_valid {
+                magical_numbers[i] = Some(MagicEntry {
+                    mask: *moves_mask,
+                    magic_number: j,
+                });
+                break;
+            }
+            // reset mask_blockers_hashmaps
+            for j in 0..65536 {
+                mask_blockers_hashmaps[i][j] = None;
+            }
+        }
+    }
+    magical_numbers.map(|x| x.unwrap())
+}
+
+pub fn print_mask(mask: u64) {
+    let x = format!("{mask:b}");
+    let mut x = "0".repeat(64 - x.len()) + &x;
+    for i in (1..8).rev() {
+        x.insert(i * 8, '\n');
+    }
+    println!("{}", x);
 }

@@ -27,13 +27,13 @@ struct ChessBoard {
 
 fn get_starting_chessboard() -> ChessBoard {
     return ChessBoard {
-        white: 5,
+        white: 68853694464,
         black: 0,
         white_pieces: ColorPieces {
             king: 0,
             queens: 0,
-            rooks: 5,
-            bishops: 0,
+            rooks: 0,
+            bishops: 68853694464,
             knights: 0,
             pawns: 0,
         },
@@ -158,6 +158,21 @@ impl ChessBoard {
         println!("{}", rook_moves & board ^ rook_moves);
     }
 
+    fn get_bishop_moves(
+        &self,
+        index: u8,
+        bishop_moves_masks_magical_numbers: &[MagicEntry; 64],
+        mask_blockers_hashmaps: &Vec<Vec<Option<u64>>>,
+    ) {
+        let square_mask = &bishop_moves_masks_magical_numbers[index as usize].mask;
+        let magical_number = &bishop_moves_masks_magical_numbers[index as usize].magic_number;
+        let board = self.white | self.black;
+        let hashkey = (board & square_mask).wrapping_mul(*magical_number) >> 48;
+        let bishop_moves = mask_blockers_hashmaps[index as usize][hashkey as usize].unwrap();
+        binary_mask::print_mask(bishop_moves & board ^ bishop_moves);
+        println!("");
+    }
+
     fn get_moves(
         &self,
         rook_moves_masks_magical_numbers: &[MagicEntry; 64],
@@ -180,6 +195,11 @@ impl ChessBoard {
                     &mask_blockers_hashmaps,
                 );
             } else if index & pieces.bishops != 0 {
+                self.get_bishop_moves(
+                    i,
+                    &rook_moves_masks_magical_numbers,
+                    &mask_blockers_hashmaps,
+                );
             } else if index & pieces.knights != 0 {
             } else if index & pieces.queens != 0 {
             }
@@ -188,14 +208,24 @@ impl ChessBoard {
 }
 
 fn main() {
-    //let chessboard = get_starting_chessboard();
-    //let fen = chessboard.get_fen();
-    //println!("{:?}", fen);
+    // get rook moves
+    //let mut mask_blockers_hashmaps: Vec<Vec<Option<u64>>> = vec![vec![None; 65536]; 64];
+    //println!("generating rook magical numbers");
+    //let rook_moves_masks_magical_numbers =
+    //    binary_mask::get_rook_moves_masks_magical_numbers(&mut mask_blockers_hashmaps);
+    //println!("generated rook magical numbers");
+    //let mut chess_board = get_starting_chessboard();
+    //chess_board.get_moves(&rook_moves_masks_magical_numbers, &mask_blockers_hashmaps);
+    //
+    // get bishop moves
+    //let x = binary_mask::get_bishop_moves_masks_collision(36, &68853694464);
+    //let x = binary_mask::get_bishop_moves_masks();
+    //binary_mask::print_mask(x[1]);
     let mut mask_blockers_hashmaps: Vec<Vec<Option<u64>>> = vec![vec![None; 65536]; 64];
-    println!("generating rook magical numbers");
-    let rook_moves_masks_magical_numbers =
-        binary_mask::get_rook_moves_masks_magical_numbers(&mut mask_blockers_hashmaps);
-    println!("generated rook magical numbers");
+    println!("generating bishop magical numbers");
+    let bishop_moves_masks_magical_numbers =
+        binary_mask::get_bishop_moves_masks_magical_numbers(&mut mask_blockers_hashmaps);
+    println!("generated bishop magical numbers");
     let mut chess_board = get_starting_chessboard();
-    chess_board.get_moves(&rook_moves_masks_magical_numbers, &mask_blockers_hashmaps);
+    chess_board.get_moves(&bishop_moves_masks_magical_numbers, &mask_blockers_hashmaps);
 }
