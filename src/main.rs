@@ -174,6 +174,11 @@ impl ChessBoard {
         knight_moves & self.white ^ knight_moves
     }
 
+    fn get_queen_moves(&self, index: u8, ma: &binary_mask::MainHashtables) -> u64 {
+        // TODO optimize specifically for the queen
+        self.get_bishop_moves(index, ma) | self.get_rook_moves(index, ma)
+    }
+
     fn get_moves(&self, ma: binary_mask::MainHashtables) {
         let pieces = if self.is_white_to_play {
             &self.white_pieces
@@ -193,6 +198,7 @@ impl ChessBoard {
             } else if index & pieces.knights != 0 {
                 self.get_knight_moves(i, &ma);
             } else if index & pieces.queens != 0 {
+                self.get_queen_moves(i, &ma);
             }
         }
     }
