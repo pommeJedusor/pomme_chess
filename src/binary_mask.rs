@@ -6,27 +6,27 @@ pub struct MagicEntry {
     pub magic_number: u64,
 }
 
-pub fn get_rock_moves_masks() -> [u64; 64] {
+pub fn get_rook_moves_masks() -> [u64; 64] {
     let mut moves: [u64; 64] = [0; 64];
     for i in 0..64 {
-        let mut rock_moves = 0;
+        let mut rook_moves = 0;
         let x = i % 8;
         let y = i / 8;
 
         for j in 1..7 {
             if j != x {
-                rock_moves |= 1 << (j + y * 8);
+                rook_moves |= 1 << (j + y * 8);
             }
             if j != y {
-                rock_moves |= 1 << (x + j * 8);
+                rook_moves |= 1 << (x + j * 8);
             }
         }
-        moves[i] = rock_moves;
+        moves[i] = rook_moves;
     }
     moves
 }
 
-pub fn get_rock_moves_masks_collision(index: usize, mask: &u64) -> u64 {
+pub fn get_rook_moves_masks_collision(index: usize, mask: &u64) -> u64 {
     let x = index as u16 % 8;
     let y = index as u16 / 8;
     let mut collision_mask = 0;
@@ -61,12 +61,12 @@ pub fn get_rock_moves_masks_collision(index: usize, mask: &u64) -> u64 {
     collision_mask
 }
 
-pub fn get_rock_moves_masks_magical_numbers(
+pub fn get_rook_moves_masks_magical_numbers(
     mask_blockers_hashmaps: &mut Vec<Vec<Option<u64>>>,
 ) -> [MagicEntry; 64] {
     assert!(mask_blockers_hashmaps.len() == 64 && mask_blockers_hashmaps[0].len() == 65536);
     let mut magical_numbers: [Option<MagicEntry>; 64] = [const { None }; 64];
-    let moves_masks = get_rock_moves_masks();
+    let moves_masks = get_rook_moves_masks();
     for (i, moves_mask) in moves_masks.iter().enumerate() {
         // get mask indexes
         let mut mask_indexes: [u8; 12] = [0; 12];
@@ -95,7 +95,7 @@ pub fn get_rock_moves_masks_magical_numbers(
             let mut is_valid = true;
             for mask_blocker in mask_blockers.iter() {
                 let hashkey = mask_blocker.wrapping_mul(j) >> 48;
-                let colision = get_rock_moves_masks_collision(i, mask_blocker);
+                let colision = get_rook_moves_masks_collision(i, mask_blocker);
                 if mask_blockers_hashmaps[i][hashkey as usize].is_some_and(|x| x != colision) {
                     is_valid = false;
                     break;

@@ -1,4 +1,4 @@
-use crate::binary_mask::{MagicEntry, get_rock_moves_masks};
+use crate::binary_mask::{MagicEntry, get_rook_moves_masks};
 
 pub mod binary_mask;
 
@@ -147,20 +147,20 @@ impl ChessBoard {
     fn get_rook_moves(
         &self,
         index: u8,
-        rock_moves_masks_magical_numbers: &[MagicEntry; 64],
+        rook_moves_masks_magical_numbers: &[MagicEntry; 64],
         mask_blockers_hashmaps: &Vec<Vec<Option<u64>>>,
     ) {
-        let square_mask = &rock_moves_masks_magical_numbers[index as usize].mask;
-        let magical_number = &rock_moves_masks_magical_numbers[index as usize].magic_number;
+        let square_mask = &rook_moves_masks_magical_numbers[index as usize].mask;
+        let magical_number = &rook_moves_masks_magical_numbers[index as usize].magic_number;
         let board = self.white | self.black;
         let hashkey = (board & square_mask).wrapping_mul(*magical_number) >> 48;
-        let rock_moves = mask_blockers_hashmaps[index as usize][hashkey as usize].unwrap();
-        println!("{}", rock_moves & board ^ rock_moves);
+        let rook_moves = mask_blockers_hashmaps[index as usize][hashkey as usize].unwrap();
+        println!("{}", rook_moves & board ^ rook_moves);
     }
 
     fn get_moves(
         &self,
-        rock_moves_masks_magical_numbers: &[MagicEntry; 64],
+        rook_moves_masks_magical_numbers: &[MagicEntry; 64],
         mask_blockers_hashmaps: &Vec<Vec<Option<u64>>>,
     ) {
         let pieces = if self.is_white_to_play {
@@ -176,7 +176,7 @@ impl ChessBoard {
             } else if index & pieces.rooks != 0 {
                 self.get_rook_moves(
                     i,
-                    &rock_moves_masks_magical_numbers,
+                    &rook_moves_masks_magical_numbers,
                     &mask_blockers_hashmaps,
                 );
             } else if index & pieces.bishops != 0 {
@@ -192,10 +192,10 @@ fn main() {
     //let fen = chessboard.get_fen();
     //println!("{:?}", fen);
     let mut mask_blockers_hashmaps: Vec<Vec<Option<u64>>> = vec![vec![None; 65536]; 64];
-    println!("generating rock magical numbers");
-    let rock_moves_masks_magical_numbers =
-        binary_mask::get_rock_moves_masks_magical_numbers(&mut mask_blockers_hashmaps);
-    println!("generated rock magical numbers");
+    println!("generating rook magical numbers");
+    let rook_moves_masks_magical_numbers =
+        binary_mask::get_rook_moves_masks_magical_numbers(&mut mask_blockers_hashmaps);
+    println!("generated rook magical numbers");
     let mut chess_board = get_starting_chessboard();
-    chess_board.get_moves(&rock_moves_masks_magical_numbers, &mask_blockers_hashmaps);
+    chess_board.get_moves(&rook_moves_masks_magical_numbers, &mask_blockers_hashmaps);
 }
