@@ -21,33 +21,36 @@ struct ChessBoard {
     white_queen_side_castle: bool,
     black_king_side_castle: bool,
     black_queen_side_castle: bool,
+
+    en_passant: u64,
 }
 
 fn get_starting_chessboard() -> ChessBoard {
     return ChessBoard {
-        white: 34661728256,
-        black: 72567767433218,
+        white: (1 << 40) | (1 << 33),
+        black: (1 << 49),
         white_pieces: ColorPieces {
             king: 0,
             queens: 0,
-            rooks: 33554432,
-            bishops: 268435456,
-            knights: 34359738368,
-            pawns: 0,
+            rooks: 0,
+            bishops: 0,
+            knights: 0,
+            pawns: (1 << 40) | (1 << 33),
         },
         black_pieces: ColorPieces {
             king: 0,
             queens: 0,
-            rooks: 72567767433216,
-            bishops: 2,
+            rooks: 0,
+            bishops: 0,
             knights: 0,
-            pawns: 0,
+            pawns: (1 << 49),
         },
-        is_white_to_play: true,
+        is_white_to_play: false,
         white_king_side_castle: true,
         white_queen_side_castle: true,
         black_king_side_castle: true,
         black_queen_side_castle: true,
+        en_passant: (1 << 42),
     };
     // return ChessBoard {
     //     white: 65535,
@@ -73,6 +76,7 @@ fn get_starting_chessboard() -> ChessBoard {
     //     white_queen_side_castle: true,
     //     black_king_side_castle: true,
     //     black_queen_side_castle: true,
+    //     en_passant: 0,
     // };
 }
 
@@ -176,6 +180,19 @@ impl ChessBoard {
         // TODO optimize specifically for the queen
         self.get_bishop_moves(index, ma) | self.get_rook_moves(index, ma)
     }
+    fn get_pawn_moves(&self, index: u8, ma: &binary_mask::MainHashtables) -> u64 {
+        let index = index as usize;
+        let color = !self.is_white_to_play as usize;
+        let pawn_takes = ma.pawn_mask_takes_hashmaps[color][index] & (self.black | self.en_passant);
+        let pawn_blockers =
+            ma.pawn_mask_blockers_hashmaps[color][index][0] & (self.black | self.white);
+        let hashkey = (pawn_blockers << ma.pawn_offsets[color][index][1])
+            | (pawn_blockers << ma.pawn_offsets[color][index][0]) & 0b11;
+        let pawn_moves = ma.pawn_mask_blockers_hashmaps[color][index][hashkey as usize];
+        let moves = pawn_moves | pawn_takes;
+        //print_mask(moves);
+        moves
+    }
 
     fn get_moves(&self, ma: binary_mask::MainHashtables) {
         let pieces = if self.is_white_to_play {
@@ -188,6 +205,7 @@ impl ChessBoard {
             // TODO continue; if square unoccupied by current player
             let index = 1 << i;
             if index & pieces.pawns != 0 {
+                self.get_pawn_moves(i, &ma);
             } else if index & pieces.king != 0 {
             } else if index & pieces.rooks != 0 {
                 self.get_rook_moves(i, &ma);

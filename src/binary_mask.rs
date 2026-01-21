@@ -5,7 +5,11 @@ pub struct MainHashtables {
     pub bishop_moves_masks_magical_numbers: [MagicEntry; 64],
     pub knight_move_masks: [u64; 64],
     pub pawn_mask_takes_hashmaps: [[u64; 64]; 2], // pawn_mask_takes_hashmaps[color][square]
-    pub pawn_moves_masks: [[u64; 64]; 2],         // pawn_moves_mask[color][index_square]
+    // to get hashkey (for white)
+    // x = (board & mask ^ mask) >> (index + 8)
+    // hashkey = (x & 0b11) | (x >> 7)
+    pub pawn_mask_blockers_hashmaps: [[[u64; 4]; 64]; 2], // pawn_mask_blockers_hashmaps[color][index_square][hashkey]
+    pub pawn_offsets: [[[u8; 2]; 64]; 2],
 }
 
 #[derive(Debug)]
@@ -309,28 +313,52 @@ pub fn get_pawn_takes_hashmaps() -> [[u64; 64]; 2] {
     result
 }
 
-pub fn get_pawn_moves_masks() -> [[u64; 64]; 2] {
-    let mut result = [[0; 64]; 2];
+pub fn get_pawn_mask_blockers_hashmaps() -> [[[u64; 4]; 64]; 2] {
+    let mut result = [[[0; 4]; 64]; 2];
     for i in 0..64 {
         let y = i / 8;
         // white
-        let mut mask = 0;
         if y < 7 {
-            mask |= 1 << (i + 8);
+            result[0][i][0] = 1 << (i + 8);
+            result[0][i][1] = 0;
         }
-        if y < 6 {
-            mask |= 1 << (i + 16);
+        if y == 1 {
+            result[0][i][0] = (1 << (i + 8)) | (1 << (i + 16));
+            result[0][i][1] = 0;
+            result[0][i][2] = 1 << (i + 8);
+            result[0][i][3] = 0;
         }
-        result[0][i] = mask;
         // black
-        let mut mask = 0;
-        if y != 0 {
-            mask |= 1 << (i - 8);
+        if y > 0 {
+            result[1][i][0] = 1 << (i - 8);
+            result[1][i][1] = 0;
         }
-        if y > 1 {
-            mask |= 1 << (i - 16);
+        if y == 6 {
+            result[1][i][0] = (1 << (i - 8)) | (1 << (i - 16));
+            result[1][i][1] = 0;
+            result[1][i][2] = 1 << (i - 8);
+            result[1][i][3] = 0;
         }
-        result[1][i] = mask;
+    }
+    result
+}
+
+pub fn get_pawn_offsets() -> [[[u8; 2]; 64]; 2] {
+    let mut result = [[[0; 2]; 64]; 2];
+    for i in 0..64 {
+        let i2 = i as u8;
+        if i < 64 - 8 {
+            result[0][i][0] = i2 + 8;
+        }
+        if i < 64 - 16 {
+            result[0][i][1] = i2 + 16;
+        }
+        if i > 8 {
+            result[1][i][0] = i2 - 8;
+        }
+        if i > 16 {
+            result[1][i][1] = i2 - 16;
+        }
     }
     result
 }
@@ -349,7 +377,8 @@ pub fn generate_main_hashtables() -> MainHashtables {
         bishop_moves_masks_magical_numbers: bishop_moves_masks_magical_numbers,
         knight_move_masks: get_knight_moves_masks(),
         pawn_mask_takes_hashmaps: get_pawn_takes_hashmaps(),
-        pawn_moves_masks: get_pawn_moves_masks(),
+        pawn_mask_blockers_hashmaps: get_pawn_mask_blockers_hashmaps(),
+        pawn_offsets: get_pawn_offsets(),
     }
 }
 
