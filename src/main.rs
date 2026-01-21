@@ -1,5 +1,3 @@
-use crate::binary_mask::{MagicEntry, get_rook_moves_masks};
-
 pub mod binary_mask;
 
 struct ColorPieces {

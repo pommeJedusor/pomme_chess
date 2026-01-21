@@ -1,5 +1,3 @@
-use std::usize;
-
 pub struct MainHashtables {
     pub rook_mask_blockers_hashmaps: Vec<Vec<Option<u64>>>,
     pub rook_moves_masks_magical_numbers: [MagicEntry; 64],
@@ -96,7 +94,7 @@ pub fn get_rook_moves_masks_magical_numbers(
         }
 
         // find magic number
-        while true {
+        loop {
             let j = rand::random_range(0..=18446744073709551615)
                 & rand::random_range(0..=18446744073709551615)
                 & rand::random_range(0..=18446744073709551615);
@@ -226,7 +224,7 @@ pub fn get_bishop_moves_masks_magical_numbers(
         }
 
         // find magic number
-        while true {
+        loop {
             let j = rand::random_range(0..=18446744073709551615)
                 & rand::random_range(0..=18446744073709551615)
                 & rand::random_range(0..=18446744073709551615);
