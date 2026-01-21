@@ -5,6 +5,7 @@ pub struct MainHashtables {
     pub bishop_moves_masks_magical_numbers: [MagicEntry; 64],
     pub knight_move_masks: [u64; 64],
     pub pawn_mask_takes_hashmaps: [[u64; 64]; 2], // pawn_mask_takes_hashmaps[color][square]
+    pub pawn_moves_masks: [[u64; 64]; 2],         // pawn_moves_mask[color][index_square]
 }
 
 #[derive(Debug)]
@@ -308,6 +309,32 @@ pub fn get_pawn_takes_hashmaps() -> [[u64; 64]; 2] {
     result
 }
 
+pub fn get_pawn_moves_masks() -> [[u64; 64]; 2] {
+    let mut result = [[0; 64]; 2];
+    for i in 0..64 {
+        let y = i / 8;
+        // white
+        let mut mask = 0;
+        if y < 7 {
+            mask |= 1 << (i + 8);
+        }
+        if y < 6 {
+            mask |= 1 << (i + 16);
+        }
+        result[0][i] = mask;
+        // black
+        let mut mask = 0;
+        if y != 0 {
+            mask |= 1 << (i - 8);
+        }
+        if y > 1 {
+            mask |= 1 << (i - 16);
+        }
+        result[1][i] = mask;
+    }
+    result
+}
+
 pub fn generate_main_hashtables() -> MainHashtables {
     let mut rook_mask_blockers_hashmaps: Vec<Vec<Option<u64>>> = vec![vec![None; 65536]; 64];
     let rook_moves_masks_magical_numbers =
@@ -322,6 +349,7 @@ pub fn generate_main_hashtables() -> MainHashtables {
         bishop_moves_masks_magical_numbers: bishop_moves_masks_magical_numbers,
         knight_move_masks: get_knight_moves_masks(),
         pawn_mask_takes_hashmaps: get_pawn_takes_hashmaps(),
+        pawn_moves_masks: get_pawn_moves_masks(),
     }
 }
 
