@@ -299,7 +299,7 @@ pub fn get_pawn_takes_hashmaps() -> [[u64; 64]; 2] {
         if x < 7 && y != 7 {
             mask |= 1 << (i + 9);
         }
-        result[0][i] = mask;
+        result[1][i] = mask;
         // black
         let mut mask = 0;
         if x < 7 && y != 0 {
@@ -308,7 +308,7 @@ pub fn get_pawn_takes_hashmaps() -> [[u64; 64]; 2] {
         if x > 0 && y != 0 {
             mask |= 1 << (i - 9);
         }
-        result[1][i] = mask;
+        result[0][i] = mask;
     }
     result
 }
@@ -318,25 +318,25 @@ pub fn get_pawn_mask_blockers_hashmaps() -> [[[u64; 4]; 64]; 2] {
     for i in 0..64 {
         let y = i / 8;
         // white
-        if y < 7 {
-            result[0][i][0] = 1 << (i + 8);
+        if y > 0 {
+            result[0][i][0] = 1 << (i - 8);
             result[0][i][1] = 0;
         }
-        if y == 1 {
-            result[0][i][0] = (1 << (i + 8)) | (1 << (i + 16));
+        if y == 6 {
+            result[0][i][0] = (1 << (i - 8)) | (1 << (i - 16));
             result[0][i][1] = 0;
-            result[0][i][2] = 1 << (i + 8);
+            result[0][i][2] = 1 << (i - 8);
             result[0][i][3] = 0;
         }
         // black
-        if y > 0 {
-            result[1][i][0] = 1 << (i - 8);
+        if y < 7 {
+            result[1][i][0] = 1 << (i + 8);
             result[1][i][1] = 0;
         }
-        if y == 6 {
-            result[1][i][0] = (1 << (i - 8)) | (1 << (i - 16));
+        if y == 1 {
+            result[1][i][0] = (1 << (i + 8)) | (1 << (i + 16));
             result[1][i][1] = 0;
-            result[1][i][2] = 1 << (i - 8);
+            result[1][i][2] = 1 << (i + 8);
             result[1][i][3] = 0;
         }
     }
@@ -347,17 +347,27 @@ pub fn get_pawn_offsets() -> [[[u8; 2]; 64]; 2] {
     let mut result = [[[0; 2]; 64]; 2];
     for i in 0..64 {
         let i2 = i as u8;
-        if i < 64 - 8 {
-            result[0][i][0] = i2 + 8;
-        }
-        if i < 64 - 16 {
-            result[0][i][1] = i2 + 16;
-        }
+        // white
         if i > 8 {
-            result[1][i][0] = i2 - 8;
+            result[0][i][0] = i2 - 8;
+            result[0][i][1] = i2 - 8;
+        } else {
+            result[0][i][0] = i2;
+            result[0][i][1] = i2;
         }
         if i > 16 {
-            result[1][i][1] = i2 - 16;
+            result[0][i][1] = i2 - 16;
+        }
+        // black
+        if i < 64 - 8 {
+            result[1][i][0] = i2 + 8;
+            result[1][i][1] = i2 + 8;
+        } else {
+            result[1][i][0] = i2;
+            result[1][i][1] = i2;
+        }
+        if i < 64 - 16 {
+            result[1][i][1] = i2 + 16;
         }
     }
     result
