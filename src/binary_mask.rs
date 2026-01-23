@@ -10,6 +10,7 @@ pub struct MainHashtables {
     // hashkey = (x & 0b11) | (x >> 7)
     pub pawn_mask_blockers_hashmaps: [[[u64; 4]; 64]; 2], // pawn_mask_blockers_hashmaps[color][index_square][hashkey]
     pub pawn_offsets: [[[u8; 2]; 64]; 2],
+    pub king_move_masks: [u64; 64],
 }
 
 #[derive(Debug)]
@@ -373,6 +374,33 @@ pub fn get_pawn_offsets() -> [[[u8; 2]; 64]; 2] {
     result
 }
 
+pub fn get_king_moves_masks() -> [u64; 64] {
+    let mut moves: [u64; 64] = [0; 64];
+    for i in 0..64 {
+        let mut king_moves = 0;
+        let x: i32 = i as i32 % 8;
+        let y: i32 = i as i32 / 8;
+
+        for (xa, ya) in [
+            (-1, -1),
+            (-1, 0),
+            (-1, 1),
+            (0, -1),
+            (0, 0),
+            (0, 1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+        ] {
+            if 0 <= x + xa && x + xa < 8 && 0 <= y + ya && y + ya < 8 {
+                king_moves |= 1 << (y + ya) * 8 + x + xa;
+            }
+        }
+        moves[i] = king_moves;
+    }
+    moves
+}
+
 pub fn generate_main_hashtables() -> MainHashtables {
     let mut rook_mask_blockers_hashmaps: Vec<Vec<Option<u64>>> = vec![vec![None; 65536]; 64];
     let rook_moves_masks_magical_numbers =
@@ -389,6 +417,7 @@ pub fn generate_main_hashtables() -> MainHashtables {
         pawn_mask_takes_hashmaps: get_pawn_takes_hashmaps(),
         pawn_mask_blockers_hashmaps: get_pawn_mask_blockers_hashmaps(),
         pawn_offsets: get_pawn_offsets(),
+        king_move_masks: get_king_moves_masks(),
     }
 }
 

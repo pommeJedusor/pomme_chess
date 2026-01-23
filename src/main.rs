@@ -182,6 +182,7 @@ impl ChessBoard {
         // TODO optimize specifically for the queen
         self.get_bishop_moves(index, ma) | self.get_rook_moves(index, ma)
     }
+
     fn get_pawn_moves(&self, index: u8, ma: &binary_mask::MainHashtables) -> u64 {
         let index = index as usize;
         let color = !self.is_white_to_play as usize;
@@ -198,6 +199,13 @@ impl ChessBoard {
         moves
     }
 
+    fn get_king_moves(&self, index: u8, ma: &binary_mask::MainHashtables) -> u64 {
+        let king_moves = ma.king_move_masks[index as usize];
+        println!("king");
+        binary_mask::print_mask(king_moves & self.player ^ king_moves);
+        king_moves & self.player ^ king_moves
+    }
+
     fn get_moves(&self, ma: binary_mask::MainHashtables) {
         let pieces = &self.player_pieces;
 
@@ -207,6 +215,7 @@ impl ChessBoard {
             if index & pieces.pawns != 0 {
                 self.get_pawn_moves(i, &ma);
             } else if index & pieces.king != 0 {
+                self.get_king_moves(i, &ma);
             } else if index & pieces.rooks != 0 {
                 self.get_rook_moves(i, &ma);
             } else if index & pieces.bishops != 0 {
