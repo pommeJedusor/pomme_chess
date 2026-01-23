@@ -200,6 +200,7 @@ impl ChessBoard {
     }
 
     fn get_king_moves(&self, index: u8, ma: &binary_mask::MainHashtables) -> u64 {
+        // TODO add castling
         let king_moves = ma.king_move_masks[index as usize];
         println!("king");
         binary_mask::print_mask(king_moves & self.player ^ king_moves);
