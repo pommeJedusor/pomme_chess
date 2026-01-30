@@ -82,6 +82,23 @@ fn get_starting_chessboard() -> ChessBoard {
     };
 }
 
+// u16: last 6 bits = to_index, 6 bits before that = from_index
+fn move_mask_to_u16(from_index: u8, mut mask: u64) -> Vec<u16> {
+    let from_index = from_index as u16;
+    let from_index = from_index << 6;
+
+    // TODO: optimize by using something else than a vector
+    let mut moves = vec![];
+    while mask != 0 {
+        let to_index = mask.trailing_zeros() as u16;
+        let move_u16 = to_index | from_index;
+        moves.push(move_u16);
+        mask ^= 1 << to_index;
+    }
+
+    moves
+}
+
 impl ChessBoard {
     fn get_fen(&self) -> String {
         // board
