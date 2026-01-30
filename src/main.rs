@@ -12,6 +12,7 @@ struct ColorPieces {
 }
 
 struct ChessBoard {
+    board: u64,
     player: u64,
     opponent: u64,
 
@@ -29,6 +30,7 @@ struct ChessBoard {
 
 fn get_starting_chessboard() -> ChessBoard {
     //return ChessBoard {
+    //    board: (1 << 40) | (1 << 33) | (1 << 49),
     //    player: (1 << 40) | (1 << 33),
     //    opponent: (1 << 49),
     //    player_pieces: ColorPieces {
@@ -55,6 +57,7 @@ fn get_starting_chessboard() -> ChessBoard {
     //    en_passant: (1 << 42),
     //};
     return ChessBoard {
+        board: 18446462598732840960 | 65535,
         player: 18446462598732840960,
         opponent: 65535,
         player_pieces: ColorPieces {
@@ -168,8 +171,7 @@ impl ChessBoard {
     fn get_rook_moves(&self, index: u8, ma: &binary_mask::MainHashtables) -> Vec<u16> {
         let square_mask = &ma.rook_moves_masks_magical_numbers[index as usize].mask;
         let magical_number = &ma.rook_moves_masks_magical_numbers[index as usize].magic_number;
-        let board = self.player | self.opponent;
-        let hashkey = (board & square_mask).wrapping_mul(*magical_number) >> 48;
+        let hashkey = (self.board & square_mask).wrapping_mul(*magical_number) >> 48;
         let rook_moves = ma.rook_mask_blockers_hashmaps[index as usize][hashkey as usize].unwrap();
         move_mask_to_u16(index, rook_moves & self.player ^ rook_moves)
     }
@@ -177,8 +179,7 @@ impl ChessBoard {
     fn get_bishop_moves(&self, index: u8, ma: &binary_mask::MainHashtables) -> Vec<u16> {
         let square_mask = &ma.bishop_moves_masks_magical_numbers[index as usize].mask;
         let magical_number = &ma.bishop_moves_masks_magical_numbers[index as usize].magic_number;
-        let board = self.player | self.opponent;
-        let hashkey = (board & square_mask).wrapping_mul(*magical_number) >> 48;
+        let hashkey = (self.board & square_mask).wrapping_mul(*magical_number) >> 48;
         let bishop_moves =
             ma.bishop_mask_blockers_hashmaps[index as usize][hashkey as usize].unwrap();
         move_mask_to_u16(index, bishop_moves & self.player ^ bishop_moves)
