@@ -221,9 +221,11 @@ impl ChessBoard {
         // TODO use something else than a vec
         let mut moves: Vec<u16> = vec![];
         let pieces = &self.player_pieces;
+        let mut player_board = self.player;
 
-        for i in 0..64 {
-            // TODO continue; if square unoccupied by current player
+        while player_board != 0 {
+            // TODO optimize conditions
+            let i = player_board.trailing_zeros() as u8;
             let index = 1 << i;
             if index & pieces.pawns != 0 {
                 moves.append(&mut self.get_pawn_moves(i, &ma));
@@ -238,6 +240,7 @@ impl ChessBoard {
             } else if index & pieces.queens != 0 {
                 moves.append(&mut self.get_queen_moves(i, &ma));
             }
+            player_board ^= index;
         }
         moves
     }
