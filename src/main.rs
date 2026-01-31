@@ -14,22 +14,28 @@ struct ColorPieces {
 
 #[derive(Clone, Copy, Debug)]
 enum TypePiece {
-    KING = 0,
-    QUEEN = 1,
-    ROOK = 2,
-    BISHOP = 3,
-    KNIGHT = 4,
-    PAWN = 5,
-    EMPTY = 6,
+    WHITE_KING = 0,
+    WHITE_QUEEN = 1,
+    WHITE_ROOK = 2,
+    WHITE_BISHOP = 3,
+    WHITE_KNIGHT = 4,
+    WHITE_PAWN = 5,
+    BLACK_KING = 6,
+    BLACK_QUEEN = 7,
+    BLACK_ROOK = 8,
+    BLACK_BISHOP = 9,
+    BLACK_KNIGHT = 10,
+    BLACK_PAWN = 11,
+    EMPTY = 12,
 }
 
 struct ChessBoard {
     board: u64,
-    player: u64,
-    opponent: u64,
+    white: u64,
+    black: u64,
 
-    player_pieces: ColorPieces,
-    opponent_pieces: ColorPieces,
+    white_pieces: ColorPieces,
+    black_pieces: ColorPieces,
 
     pieces_by_index: [TypePiece; 64],
 
@@ -53,12 +59,12 @@ fn get_starting_chessboard() -> ChessBoard {
     let player_pawn_indexes = [48, 49, 50, 51, 52, 53, 54, 55];
     let mut player_board = 0;
     for (type_piece, indexes) in [
-        (TypePiece::ROOK, player_rook_indexes.iter()),
-        (TypePiece::KNIGHT, player_knight_indexes.iter()),
-        (TypePiece::BISHOP, player_bishop_indexes.iter()),
-        (TypePiece::QUEEN, player_queen_indexes.iter()),
-        (TypePiece::KING, player_king_indexes.iter()),
-        (TypePiece::PAWN, player_pawn_indexes.iter()),
+        (TypePiece::WHITE_ROOK, player_rook_indexes.iter()),
+        (TypePiece::WHITE_KNIGHT, player_knight_indexes.iter()),
+        (TypePiece::WHITE_BISHOP, player_bishop_indexes.iter()),
+        (TypePiece::WHITE_QUEEN, player_queen_indexes.iter()),
+        (TypePiece::WHITE_KING, player_king_indexes.iter()),
+        (TypePiece::WHITE_PAWN, player_pawn_indexes.iter()),
     ] {
         for index in indexes {
             player_board |= 1 << index;
@@ -74,12 +80,12 @@ fn get_starting_chessboard() -> ChessBoard {
     let opponent_pawn_indexes = [8, 9, 10, 11, 12, 13, 14, 15];
     let mut opponent_board = 0;
     for (type_piece, indexes) in [
-        (TypePiece::ROOK, opponent_rook_indexes.iter()),
-        (TypePiece::KNIGHT, opponent_knight_indexes.iter()),
-        (TypePiece::BISHOP, opponent_bishop_indexes.iter()),
-        (TypePiece::QUEEN, opponent_queen_indexes.iter()),
-        (TypePiece::KING, opponent_king_indexes.iter()),
-        (TypePiece::PAWN, opponent_pawn_indexes.iter()),
+        (TypePiece::BLACK_ROOK, opponent_rook_indexes.iter()),
+        (TypePiece::BLACK_KNIGHT, opponent_knight_indexes.iter()),
+        (TypePiece::BLACK_BISHOP, opponent_bishop_indexes.iter()),
+        (TypePiece::BLACK_QUEEN, opponent_queen_indexes.iter()),
+        (TypePiece::BLACK_KING, opponent_king_indexes.iter()),
+        (TypePiece::BLACK_PAWN, opponent_pawn_indexes.iter()),
     ] {
         for index in indexes {
             opponent_board |= 1 << index;
@@ -88,9 +94,9 @@ fn get_starting_chessboard() -> ChessBoard {
     }
     return ChessBoard {
         board: player_board | opponent_board,
-        player: player_board,
-        opponent: opponent_board,
-        player_pieces: ColorPieces {
+        white: player_board,
+        black: opponent_board,
+        white_pieces: ColorPieces {
             king: 1 << player_king_indexes[0],
             queens: player_queen_indexes
                 .iter()
@@ -113,7 +119,7 @@ fn get_starting_chessboard() -> ChessBoard {
                 .map(|x| 1 << x)
                 .fold(0, |a, b| a | b),
         },
-        opponent_pieces: ColorPieces {
+        black_pieces: ColorPieces {
             king: 1 << opponent_king_indexes[0],
             queens: opponent_queen_indexes
                 .iter()
@@ -151,29 +157,29 @@ impl ChessBoard {
         // board
         let mut fen_board = String::new();
         for i in 0..64 {
-            if self.player_pieces.king & (1 << i) != 0 {
+            if self.white_pieces.king & (1 << i) != 0 {
                 fen_board.push_str("K");
-            } else if self.player_pieces.queens & (1 << i) != 0 {
+            } else if self.white_pieces.queens & (1 << i) != 0 {
                 fen_board.push_str("Q");
-            } else if self.player_pieces.rooks & (1 << i) != 0 {
+            } else if self.white_pieces.rooks & (1 << i) != 0 {
                 fen_board.push_str("R");
-            } else if self.player_pieces.bishops & (1 << i) != 0 {
+            } else if self.white_pieces.bishops & (1 << i) != 0 {
                 fen_board.push_str("B");
-            } else if self.player_pieces.knights & (1 << i) != 0 {
+            } else if self.white_pieces.knights & (1 << i) != 0 {
                 fen_board.push_str("N");
-            } else if self.player_pieces.pawns & (1 << i) != 0 {
+            } else if self.white_pieces.pawns & (1 << i) != 0 {
                 fen_board.push_str("P");
-            } else if self.opponent_pieces.king & (1 << i) != 0 {
+            } else if self.black_pieces.king & (1 << i) != 0 {
                 fen_board.push_str("k");
-            } else if self.opponent_pieces.queens & (1 << i) != 0 {
+            } else if self.black_pieces.queens & (1 << i) != 0 {
                 fen_board.push_str("q");
-            } else if self.opponent_pieces.rooks & (1 << i) != 0 {
+            } else if self.black_pieces.rooks & (1 << i) != 0 {
                 fen_board.push_str("r");
-            } else if self.opponent_pieces.bishops & (1 << i) != 0 {
+            } else if self.black_pieces.bishops & (1 << i) != 0 {
                 fen_board.push_str("b");
-            } else if self.opponent_pieces.knights & (1 << i) != 0 {
+            } else if self.black_pieces.knights & (1 << i) != 0 {
                 fen_board.push_str("n");
-            } else if self.opponent_pieces.pawns & (1 << i) != 0 {
+            } else if self.black_pieces.pawns & (1 << i) != 0 {
                 fen_board.push_str("p");
             } else {
                 fen_board.push_str("1");
@@ -217,7 +223,7 @@ fn main() {
     let ma = binary_mask::generate_main_hashtables();
     let chessboard = get_starting_chessboard();
     println!("{:?}", chessboard.get_fen());
-    print_mask(chessboard.player | chessboard.opponent);
+    print_mask(chessboard.board);
     println!("{:?}", chessboard.pieces_by_index);
     let moves = chessboard.get_moves(ma);
     println!("{:?}", moves);
