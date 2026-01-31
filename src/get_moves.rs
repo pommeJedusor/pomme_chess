@@ -90,8 +90,8 @@ impl ChessBoard {
         let pawn_takes =
             ma.pawn_mask_takes_hashmaps[color][index] & ((self.board ^ player) | self.en_passant);
         let pawn_blockers = ma.pawn_mask_blockers_hashmaps[color][index][0] & (self.board);
-        let hashkey = (pawn_blockers >> ma.pawn_offsets[color][index][1])
-            | (pawn_blockers >> ma.pawn_offsets[color][index][0]) & 0b11;
+        let hashkey = (pawn_blockers >> ma.pawn_offsets[color][index][0])
+            | (pawn_blockers >> ma.pawn_offsets[color][index][1]) & 0b11;
         let pawn_moves = ma.pawn_mask_blockers_hashmaps[color][index][hashkey as usize];
         let moves = pawn_moves | pawn_takes;
         move_mask_to_u16(index as u8, moves)
@@ -103,17 +103,18 @@ impl ChessBoard {
         move_mask_to_u16(index as u8, king_moves & player ^ king_moves)
     }
 
-    pub fn get_moves(&self, ma: binary_mask::MainHashtables) -> Vec<u16> {
+    pub fn get_moves(&self, ma: &binary_mask::MainHashtables) -> Vec<u16> {
         // TODO use something else than a vec
         let mut moves: Vec<u16> = vec![];
-        let mut player_board = if self.is_white_to_play {
+        let player_board = if self.is_white_to_play {
             self.white
         } else {
             self.black
         };
+        let mut player_pieces = player_board;
 
-        while player_board != 0 {
-            let i = player_board.trailing_zeros() as usize;
+        while player_pieces != 0 {
+            let i = player_pieces.trailing_zeros() as usize;
             let index = 1 << i;
             moves.append(&mut MOVE_FUNC_BY_PIECE[self.pieces_by_index[i] as usize](
                 self,
@@ -121,7 +122,7 @@ impl ChessBoard {
                 &ma,
                 player_board,
             ));
-            player_board ^= index;
+            player_pieces ^= index;
         }
         moves
     }

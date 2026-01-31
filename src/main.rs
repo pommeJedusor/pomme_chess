@@ -2,17 +2,9 @@ use crate::binary_mask::print_mask;
 
 pub mod binary_mask;
 pub mod get_moves;
+pub mod make_move;
 
-struct ColorPieces {
-    king: u64,
-    queens: u64,
-    rooks: u64,
-    bishops: u64,
-    knights: u64,
-    pawns: u64,
-}
-
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum TypePiece {
     WhiteKing = 0,
     WhiteQueen = 1,
@@ -34,8 +26,7 @@ struct ChessBoard {
     white: u64,
     black: u64,
 
-    white_pieces: ColorPieces,
-    black_pieces: ColorPieces,
+    pieces: [u64; 12],
 
     pieces_by_index: [TypePiece; 64],
 
@@ -96,52 +87,50 @@ fn get_starting_chessboard() -> ChessBoard {
         board: player_board | opponent_board,
         white: player_board,
         black: opponent_board,
-        white_pieces: ColorPieces {
-            king: 1 << player_king_indexes[0],
-            queens: player_queen_indexes
+        pieces: [
+            1 << player_king_indexes[0],
+            player_queen_indexes
                 .iter()
                 .map(|x| 1 << x)
                 .fold(0, |a, b| a | b),
-            rooks: player_rook_indexes
+            player_rook_indexes
                 .iter()
                 .map(|x| 1 << x)
                 .fold(0, |a, b| a | b),
-            bishops: player_bishop_indexes
+            player_bishop_indexes
                 .iter()
                 .map(|x| 1 << x)
                 .fold(0, |a, b| a | b),
-            knights: player_knight_indexes
+            player_knight_indexes
                 .iter()
                 .map(|x| 1 << x)
                 .fold(0, |a, b| a | b),
-            pawns: player_pawn_indexes
+            player_pawn_indexes
                 .iter()
                 .map(|x| 1 << x)
                 .fold(0, |a, b| a | b),
-        },
-        black_pieces: ColorPieces {
-            king: 1 << opponent_king_indexes[0],
-            queens: opponent_queen_indexes
+            1 << opponent_king_indexes[0],
+            opponent_queen_indexes
                 .iter()
                 .map(|x| 1 << x)
                 .fold(0, |a, b| a | b),
-            rooks: opponent_rook_indexes
+            opponent_rook_indexes
                 .iter()
                 .map(|x| 1 << x)
                 .fold(0, |a, b| a | b),
-            bishops: opponent_bishop_indexes
+            opponent_bishop_indexes
                 .iter()
                 .map(|x| 1 << x)
                 .fold(0, |a, b| a | b),
-            knights: opponent_knight_indexes
+            opponent_knight_indexes
                 .iter()
                 .map(|x| 1 << x)
                 .fold(0, |a, b| a | b),
-            pawns: opponent_pawn_indexes
+            opponent_pawn_indexes
                 .iter()
                 .map(|x| 1 << x)
                 .fold(0, |a, b| a | b),
-        },
+        ],
         pieces_by_index: pieces_by_index,
         is_white_to_play: true,
         player_king_side_castle: true,
@@ -155,35 +144,12 @@ fn get_starting_chessboard() -> ChessBoard {
 impl ChessBoard {
     fn get_fen(&self) -> String {
         // board
+        let letters = [
+            "K", "Q", "R", "B", "N", "P", "k", "q", "r", "b", "n", "p", "1",
+        ];
         let mut fen_board = String::new();
         for i in 0..64 {
-            if self.white_pieces.king & (1 << i) != 0 {
-                fen_board.push_str("K");
-            } else if self.white_pieces.queens & (1 << i) != 0 {
-                fen_board.push_str("Q");
-            } else if self.white_pieces.rooks & (1 << i) != 0 {
-                fen_board.push_str("R");
-            } else if self.white_pieces.bishops & (1 << i) != 0 {
-                fen_board.push_str("B");
-            } else if self.white_pieces.knights & (1 << i) != 0 {
-                fen_board.push_str("N");
-            } else if self.white_pieces.pawns & (1 << i) != 0 {
-                fen_board.push_str("P");
-            } else if self.black_pieces.king & (1 << i) != 0 {
-                fen_board.push_str("k");
-            } else if self.black_pieces.queens & (1 << i) != 0 {
-                fen_board.push_str("q");
-            } else if self.black_pieces.rooks & (1 << i) != 0 {
-                fen_board.push_str("r");
-            } else if self.black_pieces.bishops & (1 << i) != 0 {
-                fen_board.push_str("b");
-            } else if self.black_pieces.knights & (1 << i) != 0 {
-                fen_board.push_str("n");
-            } else if self.black_pieces.pawns & (1 << i) != 0 {
-                fen_board.push_str("p");
-            } else {
-                fen_board.push_str("1");
-            }
+            fen_board.push_str(letters[self.pieces_by_index[i] as usize]);
             if i % 8 == 7 {
                 fen_board.push_str("/");
             }
@@ -221,10 +187,26 @@ impl ChessBoard {
 
 fn main() {
     let ma = binary_mask::generate_main_hashtables();
-    let chessboard = get_starting_chessboard();
+    let mut chessboard = get_starting_chessboard();
     println!("{:?}", chessboard.get_fen());
     print_mask(chessboard.board);
-    println!("{:?}", chessboard.pieces_by_index);
-    let moves = chessboard.get_moves(ma);
-    println!("{:?}", moves);
+    for _ in 0..6 {
+        let moves = chessboard.get_moves(&ma);
+        println!(
+            "{:?}",
+            *moves
+                .iter()
+                .filter(|x| **x != 1 && **x != 405 && **x != 407)
+                .next()
+                .unwrap()
+        );
+        chessboard.make_move(
+            *moves
+                .iter()
+                .filter(|x| **x != 1 && **x != 405 && **x != 407)
+                .next()
+                .unwrap(),
+        );
+        println!("{:?}", chessboard.get_fen());
+    }
 }

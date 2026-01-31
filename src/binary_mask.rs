@@ -332,12 +332,12 @@ pub fn get_pawn_mask_blockers_hashmaps() -> [[[u64; 4]; 64]; 2] {
         // black
         if y < 7 {
             result[1][i][0] = 1 << (i + 8);
-            result[1][i][1] = 0;
+            result[1][i][2] = 0;
         }
         if y == 1 {
             result[1][i][0] = (1 << (i + 8)) | (1 << (i + 16));
-            result[1][i][1] = 0;
-            result[1][i][2] = 1 << (i + 8);
+            result[1][i][2] = 0;
+            result[1][i][1] = 1 << (i + 8);
             result[1][i][3] = 0;
         }
     }
@@ -350,8 +350,8 @@ pub fn get_pawn_offsets() -> [[[u8; 2]; 64]; 2] {
         let i2 = i as u8;
         // white
         if i > 8 {
-            result[0][i][0] = i2 - 8;
-            result[0][i][1] = i2 - 8;
+            result[0][i][0] = i2 - 9;
+            result[0][i][1] = i2 - 9;
         } else {
             result[0][i][0] = i2;
             result[0][i][1] = i2;
@@ -361,14 +361,14 @@ pub fn get_pawn_offsets() -> [[[u8; 2]; 64]; 2] {
         }
         // black
         if i < 64 - 8 {
-            result[1][i][0] = i2 + 8;
-            result[1][i][1] = i2 + 8;
+            result[1][i][0] = i2 + 7;
+            result[1][i][1] = i2 + 7;
         } else {
             result[1][i][0] = i2;
             result[1][i][1] = i2;
         }
         if i < 64 - 16 {
-            result[1][i][1] = i2 + 16;
+            result[1][i][0] = i2 + 16;
         }
     }
     result
