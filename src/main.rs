@@ -11,6 +11,17 @@ struct ColorPieces {
     pawns: u64,
 }
 
+#[derive(Clone, Copy, Debug)]
+enum TypePiece {
+    KING = 0,
+    QUEEN = 1,
+    ROOK = 2,
+    BISHOP = 3,
+    KNIGHT = 4,
+    PAWN = 5,
+    EMPTY = 6,
+}
+
 struct ChessBoard {
     board: u64,
     player: u64,
@@ -18,6 +29,8 @@ struct ChessBoard {
 
     player_pieces: ColorPieces,
     opponent_pieces: ColorPieces,
+
+    pieces_by_index: [TypePiece; 64],
 
     is_white_to_play: bool,
     player_king_side_castle: bool,
@@ -29,53 +42,100 @@ struct ChessBoard {
 }
 
 fn get_starting_chessboard() -> ChessBoard {
-    //return ChessBoard {
-    //    board: (1 << 40) | (1 << 33) | (1 << 49),
-    //    player: (1 << 40) | (1 << 33),
-    //    opponent: (1 << 49),
-    //    player_pieces: ColorPieces {
-    //        king: 0,
-    //        queens: 0,
-    //        rooks: 0,
-    //        bishops: 0,
-    //        knights: 0,
-    //        pawns: (1 << 40) | (1 << 33),
-    //    },
-    //    opponent_pieces: ColorPieces {
-    //        king: 0,
-    //        queens: 0,
-    //        rooks: 0,
-    //        bishops: 0,
-    //        knights: 0,
-    //        pawns: (1 << 49),
-    //    },
-    //    is_white_to_play: true,
-    //    player_king_side_castle: true,
-    //    player_queen_side_castle: true,
-    //    opponent_king_side_castle: true,
-    //    opponent_queen_side_castle: true,
-    //    en_passant: (1 << 42),
-    //};
+    let mut pieces_by_index = [TypePiece::EMPTY; 64];
+    // player
+    let player_rook_indexes = [56, 63];
+    let player_knight_indexes = [57, 62];
+    let player_bishop_indexes = [58, 61];
+    let player_queen_indexes = [59];
+    let player_king_indexes = [60];
+    let player_pawn_indexes = [48, 49, 50, 51, 52, 53, 54, 55];
+    let mut player_board = 0;
+    for (type_piece, indexes) in [
+        (TypePiece::ROOK, player_rook_indexes.iter()),
+        (TypePiece::KNIGHT, player_knight_indexes.iter()),
+        (TypePiece::BISHOP, player_bishop_indexes.iter()),
+        (TypePiece::QUEEN, player_queen_indexes.iter()),
+        (TypePiece::KING, player_king_indexes.iter()),
+        (TypePiece::PAWN, player_pawn_indexes.iter()),
+    ] {
+        for index in indexes {
+            player_board |= 1 << index;
+            pieces_by_index[*index as usize] = type_piece;
+        }
+    }
+    // opponent
+    let opponent_rook_indexes = [0, 7];
+    let opponent_knight_indexes = [1, 6];
+    let opponent_bishop_indexes = [2, 5];
+    let opponent_queen_indexes = [3];
+    let opponent_king_indexes = [4];
+    let opponent_pawn_indexes = [8, 9, 10, 11, 12, 13, 14, 15];
+    let mut opponent_board = 0;
+    for (type_piece, indexes) in [
+        (TypePiece::ROOK, opponent_rook_indexes.iter()),
+        (TypePiece::KNIGHT, opponent_knight_indexes.iter()),
+        (TypePiece::BISHOP, opponent_bishop_indexes.iter()),
+        (TypePiece::QUEEN, opponent_queen_indexes.iter()),
+        (TypePiece::KING, opponent_king_indexes.iter()),
+        (TypePiece::PAWN, opponent_pawn_indexes.iter()),
+    ] {
+        for index in indexes {
+            opponent_board |= 1 << index;
+            pieces_by_index[*index as usize] = type_piece;
+        }
+    }
     return ChessBoard {
-        board: 18446462598732840960 | 65535,
-        player: 18446462598732840960,
-        opponent: 65535,
+        board: player_board | opponent_board,
+        player: player_board,
+        opponent: opponent_board,
         player_pieces: ColorPieces {
-            king: 1152921504606846976,
-            queens: 576460752303423488,
-            rooks: 9295429630892703744,
-            bishops: 2594073385365405696,
-            knights: 4755801206503243776,
-            pawns: 71776119061217280,
+            king: 1 << player_king_indexes[0],
+            queens: player_queen_indexes
+                .iter()
+                .map(|x| 1 << x)
+                .fold(0, |a, b| a | b),
+            rooks: player_rook_indexes
+                .iter()
+                .map(|x| 1 << x)
+                .fold(0, |a, b| a | b),
+            bishops: player_bishop_indexes
+                .iter()
+                .map(|x| 1 << x)
+                .fold(0, |a, b| a | b),
+            knights: player_knight_indexes
+                .iter()
+                .map(|x| 1 << x)
+                .fold(0, |a, b| a | b),
+            pawns: player_pawn_indexes
+                .iter()
+                .map(|x| 1 << x)
+                .fold(0, |a, b| a | b),
         },
         opponent_pieces: ColorPieces {
-            king: 16,
-            queens: 8,
-            rooks: 129,
-            bishops: 36,
-            knights: 66,
-            pawns: 65280,
+            king: 1 << opponent_king_indexes[0],
+            queens: opponent_queen_indexes
+                .iter()
+                .map(|x| 1 << x)
+                .fold(0, |a, b| a | b),
+            rooks: opponent_rook_indexes
+                .iter()
+                .map(|x| 1 << x)
+                .fold(0, |a, b| a | b),
+            bishops: opponent_bishop_indexes
+                .iter()
+                .map(|x| 1 << x)
+                .fold(0, |a, b| a | b),
+            knights: opponent_knight_indexes
+                .iter()
+                .map(|x| 1 << x)
+                .fold(0, |a, b| a | b),
+            pawns: opponent_pawn_indexes
+                .iter()
+                .map(|x| 1 << x)
+                .fold(0, |a, b| a | b),
         },
+        pieces_by_index: pieces_by_index,
         is_white_to_play: true,
         player_king_side_castle: true,
         player_queen_side_castle: true,
@@ -249,7 +309,7 @@ impl ChessBoard {
 fn main() {
     let ma = binary_mask::generate_main_hashtables();
     let chessboard = get_starting_chessboard();
+    println!("{:?}", chessboard.get_fen());
     print_mask(chessboard.player | chessboard.opponent);
-    let moves = chessboard.get_moves(ma);
-    println!("{:?}", moves);
+    println!("{:?}", chessboard.pieces_by_index);
 }
