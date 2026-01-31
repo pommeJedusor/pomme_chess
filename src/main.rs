@@ -14,19 +14,19 @@ struct ColorPieces {
 
 #[derive(Clone, Copy, Debug)]
 enum TypePiece {
-    WHITE_KING = 0,
-    WHITE_QUEEN = 1,
-    WHITE_ROOK = 2,
-    WHITE_BISHOP = 3,
-    WHITE_KNIGHT = 4,
-    WHITE_PAWN = 5,
-    BLACK_KING = 6,
-    BLACK_QUEEN = 7,
-    BLACK_ROOK = 8,
-    BLACK_BISHOP = 9,
-    BLACK_KNIGHT = 10,
-    BLACK_PAWN = 11,
-    EMPTY = 12,
+    WhiteKing = 0,
+    WhiteQueen = 1,
+    WhiteRook = 2,
+    WhiteBishop = 3,
+    WhiteKnight = 4,
+    WhitePawn = 5,
+    BlackKing = 6,
+    BlackQueen = 7,
+    BlackRook = 8,
+    BlackBishop = 9,
+    BlackKnight = 10,
+    BlackPawn = 11,
+    Empty = 12,
 }
 
 struct ChessBoard {
@@ -49,7 +49,7 @@ struct ChessBoard {
 }
 
 fn get_starting_chessboard() -> ChessBoard {
-    let mut pieces_by_index = [TypePiece::EMPTY; 64];
+    let mut pieces_by_index = [TypePiece::Empty; 64];
     // player
     let player_rook_indexes = [56, 63];
     let player_knight_indexes = [57, 62];
@@ -59,12 +59,12 @@ fn get_starting_chessboard() -> ChessBoard {
     let player_pawn_indexes = [48, 49, 50, 51, 52, 53, 54, 55];
     let mut player_board = 0;
     for (type_piece, indexes) in [
-        (TypePiece::WHITE_ROOK, player_rook_indexes.iter()),
-        (TypePiece::WHITE_KNIGHT, player_knight_indexes.iter()),
-        (TypePiece::WHITE_BISHOP, player_bishop_indexes.iter()),
-        (TypePiece::WHITE_QUEEN, player_queen_indexes.iter()),
-        (TypePiece::WHITE_KING, player_king_indexes.iter()),
-        (TypePiece::WHITE_PAWN, player_pawn_indexes.iter()),
+        (TypePiece::WhiteRook, player_rook_indexes.iter()),
+        (TypePiece::WhiteKnight, player_knight_indexes.iter()),
+        (TypePiece::WhiteBishop, player_bishop_indexes.iter()),
+        (TypePiece::WhiteQueen, player_queen_indexes.iter()),
+        (TypePiece::WhiteKing, player_king_indexes.iter()),
+        (TypePiece::WhitePawn, player_pawn_indexes.iter()),
     ] {
         for index in indexes {
             player_board |= 1 << index;
@@ -80,12 +80,12 @@ fn get_starting_chessboard() -> ChessBoard {
     let opponent_pawn_indexes = [8, 9, 10, 11, 12, 13, 14, 15];
     let mut opponent_board = 0;
     for (type_piece, indexes) in [
-        (TypePiece::BLACK_ROOK, opponent_rook_indexes.iter()),
-        (TypePiece::BLACK_KNIGHT, opponent_knight_indexes.iter()),
-        (TypePiece::BLACK_BISHOP, opponent_bishop_indexes.iter()),
-        (TypePiece::BLACK_QUEEN, opponent_queen_indexes.iter()),
-        (TypePiece::BLACK_KING, opponent_king_indexes.iter()),
-        (TypePiece::BLACK_PAWN, opponent_pawn_indexes.iter()),
+        (TypePiece::BlackRook, opponent_rook_indexes.iter()),
+        (TypePiece::BlackKnight, opponent_knight_indexes.iter()),
+        (TypePiece::BlackBishop, opponent_bishop_indexes.iter()),
+        (TypePiece::BlackQueen, opponent_queen_indexes.iter()),
+        (TypePiece::BlackKing, opponent_king_indexes.iter()),
+        (TypePiece::BlackPawn, opponent_pawn_indexes.iter()),
     ] {
         for index in indexes {
             opponent_board |= 1 << index;
