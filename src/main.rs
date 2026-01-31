@@ -1,8 +1,9 @@
-use crate::binary_mask::print_mask;
+use crate::{binary_mask::print_mask, notation::get_notation_from_move};
 
 pub mod binary_mask;
 pub mod get_moves;
 pub mod make_move;
+pub mod notation;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum TypePiece {
@@ -141,50 +142,6 @@ fn get_starting_chessboard() -> ChessBoard {
     };
 }
 
-impl ChessBoard {
-    fn get_fen(&self) -> String {
-        // board
-        let letters = [
-            "K", "Q", "R", "B", "N", "P", "k", "q", "r", "b", "n", "p", "1",
-        ];
-        let mut fen_board = String::new();
-        for i in 0..64 {
-            fen_board.push_str(letters[self.pieces_by_index[i] as usize]);
-            if i % 8 == 7 {
-                fen_board.push_str("/");
-            }
-        }
-        fen_board = fen_board
-            .replace("11111111", "8")
-            .replace("1111111", "7")
-            .replace("111111", "6")
-            .replace("11111", "5")
-            .replace("1111", "4")
-            .replace("111", "3")
-            .replace("11", "2");
-
-        // player turn
-        let fen_player_turn = String::from(if self.is_white_to_play { "w" } else { "b" });
-
-        // castles
-        let mut fen_castles = String::new();
-        if self.player_king_side_castle {
-            fen_castles.push_str("K");
-        }
-        if self.player_queen_side_castle {
-            fen_castles.push_str("Q");
-        }
-        if self.opponent_king_side_castle {
-            fen_castles.push_str("k");
-        }
-        if self.opponent_queen_side_castle {
-            fen_castles.push_str("q");
-        }
-
-        fen_board + " " + &fen_player_turn + " " + &fen_castles
-    }
-}
-
 fn main() {
     let ma = binary_mask::generate_main_hashtables();
     let mut chessboard = get_starting_chessboard();
@@ -192,21 +149,14 @@ fn main() {
     print_mask(chessboard.board);
     for _ in 0..6 {
         let moves = chessboard.get_moves(&ma);
-        println!(
-            "{:?}",
-            *moves
-                .iter()
-                .filter(|x| **x != 1 && **x != 405 && **x != 407)
-                .next()
-                .unwrap()
-        );
-        chessboard.make_move(
-            *moves
-                .iter()
-                .filter(|x| **x != 1 && **x != 405 && **x != 407)
-                .next()
-                .unwrap(),
-        );
+        println!("{:?}", moves);
+        let move_code = *moves
+            .iter()
+            .filter(|x| **x != 1 && **x != 405 && **x != 407)
+            .next()
+            .unwrap();
+        chessboard.make_move(move_code);
+        println!("{:?}", get_notation_from_move(move_code));
         println!("{:?}", chessboard.get_fen());
     }
 }
