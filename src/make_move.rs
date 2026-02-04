@@ -73,6 +73,8 @@ impl ChessBoard {
             && to_index - 16 == from_index
         {
             self.en_passant = 1 << (to_index - 8);
+        } else {
+            self.en_passant = 0;
         }
 
         self.is_white_to_play = !self.is_white_to_play;
