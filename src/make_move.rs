@@ -8,18 +8,18 @@ impl ChessBoard {
         let from_index = (move_code >> 6) & 0b111111;
         let from_index = from_index as usize;
         let color = self.is_white_to_play as usize;
+        let other_color = !self.is_white_to_play as usize;
+        let move_xor = (1 << to_index) | (1 << from_index);
+        let move_from_index = 1 << from_index;
+        let move_to_index = 1 << to_index;
 
         // takes
-        if self.pieces_by_index[to_index] != TypePiece::Empty {
-            self.pieces[self.pieces_by_index[to_index] as usize] ^= 1 << to_index;
-            self.players[color] ^= 1 << to_index;
-        } else {
-            self.board ^= 1 << to_index;
-        }
+        self.board |= move_to_index;
+        self.pieces[self.pieces_by_index[to_index] as usize] &= !move_to_index;
+        self.players[other_color] &= !move_to_index;
 
-        let move_xor = (1 << to_index) | (1 << from_index);
         self.pieces[self.pieces_by_index[from_index] as usize] ^= move_xor;
-        self.board ^= 1 << from_index;
+        self.board ^= move_from_index;
         self.players[color] ^= move_xor;
 
         self.pieces_by_index[to_index] = self.pieces_by_index[from_index];

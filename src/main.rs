@@ -26,7 +26,7 @@ struct ChessBoard {
     board: u64,
     players: [u64; 2],
 
-    pieces: [u64; 12],
+    pieces: [u64; 13],
 
     pieces_by_index: [TypePiece; 64],
 
@@ -129,6 +129,7 @@ fn get_starting_chessboard() -> ChessBoard {
                 .iter()
                 .map(|x| 1 << x)
                 .fold(0, |a, b| a | b),
+            0,
         ],
         pieces_by_index: pieces_by_index,
         is_white_to_play: true,
