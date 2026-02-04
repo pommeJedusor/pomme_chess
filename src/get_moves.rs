@@ -106,12 +106,8 @@ impl ChessBoard {
     pub fn get_moves(&self, ma: &binary_mask::MainHashtables) -> Vec<u16> {
         // TODO use something else than a vec
         let mut moves: Vec<u16> = vec![];
-        let player_board = if self.is_white_to_play {
-            self.white
-        } else {
-            self.black
-        };
-        let mut player_pieces = player_board;
+        let color = self.is_white_to_play as usize;
+        let mut player_pieces = self.players[color];
 
         while player_pieces != 0 {
             let i = player_pieces.trailing_zeros() as usize;
@@ -120,7 +116,7 @@ impl ChessBoard {
                 self,
                 i as u8,
                 &ma,
-                player_board,
+                self.players[color],
             ));
             player_pieces ^= index;
         }

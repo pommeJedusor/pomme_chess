@@ -24,8 +24,7 @@ enum TypePiece {
 
 struct ChessBoard {
     board: u64,
-    white: u64,
-    black: u64,
+    players: [u64; 2],
 
     pieces: [u64; 12],
 
@@ -86,8 +85,7 @@ fn get_starting_chessboard() -> ChessBoard {
     }
     return ChessBoard {
         board: player_board | opponent_board,
-        white: player_board,
-        black: opponent_board,
+        players: [opponent_board, player_board],
         pieces: [
             1 << player_king_indexes[0],
             player_queen_indexes
