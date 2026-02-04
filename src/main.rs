@@ -145,17 +145,14 @@ fn main() {
     let ma = binary_mask::generate_main_hashtables();
     let mut chessboard = get_starting_chessboard();
     println!("{:?}", chessboard.get_fen());
+    // white en passant
+    chessboard.make_move(24 | (48 << 6));
+    chessboard.make_move(25 | (9 << 6));
+    chessboard.make_move(chessboard.get_moves(&ma)[1]);
+    // black en passant
+    //chessboard.is_white_to_play = false;
+    //chessboard.make_move(32 | (8 << 6));
+    //chessboard.make_move(33 | (49 << 6));
+    //chessboard.make_move(chessboard.get_moves(&ma)[22]);
     print_mask(chessboard.board);
-    for _ in 0..6 {
-        let moves = chessboard.get_moves(&ma);
-        println!("{:?}", moves);
-        let move_code = *moves
-            .iter()
-            .filter(|x| **x != 1 && **x != 405 && **x != 407)
-            .next()
-            .unwrap();
-        chessboard.make_move(move_code);
-        println!("{:?}", get_notation_from_move(move_code));
-        println!("{:?}", chessboard.get_fen());
-    }
 }

@@ -1,8 +1,31 @@
 use crate::{ChessBoard, TypePiece};
 
+// move code
+// 2 first bits = type:
+//      00  -> normal move
+//      01  -> castling
+//      10  -> promotion
+//      11  -> en-passant?
+//
+// if type == normal move:
+// just do the move, normally according to the last 12 bits
+// if type == castling:
+// do the move according to the last 12 bits, then move the rook according to the 3th->4th bits:
+//      00 -> WHITE-KINGSIDE
+//      01 -> WHITE-QUEENSIDE
+//      10 -> BLACK-KINGSIDE
+//      11 -> BLACK-QUEENSIDE
+// if type == promotion:
+// remove the pawn from_index, remove the piece at the to_index if there is one, create at the
+// to_index a piece according to the 3th->4th bits:
+//      00 -> QUEEN
+//      01 -> ROOK
+//      10 -> BISHOP
+//      11 -> KNIGHT
+
 impl ChessBoard {
     pub fn make_move(&mut self, move_code: u16) {
-        // TODO implement: castling, en passant, promotion and sub-promotions
+        // TODO implement: castling, promotion and sub-promotions
         let to_index = move_code & 0b111111;
         let to_index = to_index as usize;
         let from_index = (move_code >> 6) & 0b111111;
@@ -24,6 +47,33 @@ impl ChessBoard {
 
         self.pieces_by_index[to_index] = self.pieces_by_index[from_index];
         self.pieces_by_index[from_index] = TypePiece::Empty;
+
+        // en-passant
+        // TODO: optimize
+        if self.pieces[TypePiece::WhitePawn as usize] & self.en_passant != 0 {
+            let piece_to_remove = (0b111111110000000000000000 & self.en_passant) << 8;
+            self.pieces[TypePiece::BlackPawn as usize] ^= piece_to_remove;
+            self.players[other_color] ^= piece_to_remove;
+            self.board ^= piece_to_remove;
+            self.pieces_by_index[to_index + 8] = TypePiece::Empty;
+        } else if self.pieces[TypePiece::BlackPawn as usize] & self.en_passant != 0 {
+            let piece_to_remove =
+                (0b111111110000000000000000000000000000000000000000 & self.en_passant) >> 8;
+            self.pieces[TypePiece::WhitePawn as usize] ^= piece_to_remove;
+            self.players[other_color] ^= piece_to_remove;
+            self.board ^= piece_to_remove;
+            self.pieces_by_index[to_index - 8] = TypePiece::Empty;
+        }
+
+        // update en-passant
+        // TODO: optimize
+        if self.pieces_by_index[to_index] == TypePiece::WhitePawn && to_index + 16 == from_index {
+            self.en_passant = 1 << (to_index + 8);
+        } else if self.pieces_by_index[to_index] == TypePiece::BlackPawn
+            && to_index - 16 == from_index
+        {
+            self.en_passant = 1 << (to_index - 8);
+        }
 
         self.is_white_to_play = !self.is_white_to_play;
     }
