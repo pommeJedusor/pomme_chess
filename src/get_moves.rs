@@ -39,6 +39,29 @@ fn move_mask_to_u16(from_index: u8, mut mask: u64) -> Vec<u16> {
     moves
 }
 
+fn pawn_move_mask_to_u16(from_index: u8, mut mask: u64) -> Vec<u16> {
+    let from_index = from_index as u16;
+    let from_index = from_index << 6;
+
+    // TODO: optimize by using something else than a vector
+    let mut moves = vec![];
+    while mask != 0 {
+        let to_index = mask.trailing_zeros() as u16;
+        let move_u16 = to_index | from_index;
+        if to_index < 8 || to_index > 55 {
+            moves.push(move_u16 | 0b1000000000000000);
+            moves.push(move_u16 | 0b1001000000000000);
+            moves.push(move_u16 | 0b1010000000000000);
+            moves.push(move_u16 | 0b1011000000000000);
+        } else {
+            moves.push(move_u16);
+        }
+        mask ^= 1 << to_index;
+    }
+
+    moves
+}
+
 impl ChessBoard {
     fn get_rook_moves(&self, index: u8, ma: &binary_mask::MainHashtables, player: u64) -> Vec<u16> {
         let square_mask = &ma.rook_moves_masks_magical_numbers[index as usize].mask;
@@ -94,7 +117,7 @@ impl ChessBoard {
             | (pawn_blockers >> ma.pawn_offsets[color][index][1]) & 0b11;
         let pawn_moves = ma.pawn_mask_blockers_hashmaps[color][index][hashkey as usize];
         let moves = pawn_moves | pawn_takes;
-        move_mask_to_u16(index as u8, moves)
+        pawn_move_mask_to_u16(index as u8, moves)
     }
 
     fn get_king_moves(&self, index: u8, ma: &binary_mask::MainHashtables, player: u64) -> Vec<u16> {

@@ -22,10 +22,22 @@ use crate::{ChessBoard, TypePiece};
 //      01 -> ROOK
 //      10 -> BISHOP
 //      11 -> KNIGHT
+//
+const MAKE_MOVE_FUNCS: [for<'a> fn(&'a mut ChessBoard, u16); 4] = [
+    ChessBoard::make_move_normal,
+    ChessBoard::make_move_normal,
+    ChessBoard::make_move_promotion,
+    ChessBoard::make_move_normal,
+];
 
 impl ChessBoard {
     pub fn make_move(&mut self, move_code: u16) {
-        // TODO implement: castling, promotion and sub-promotions
+        // TODO implement: castling
+        let type_move = move_code >> 14;
+        MAKE_MOVE_FUNCS[type_move as usize](self, move_code);
+    }
+
+    fn make_move_normal(&mut self, move_code: u16) {
         let to_index = move_code & 0b111111;
         let to_index = to_index as usize;
         let from_index = (move_code >> 6) & 0b111111;
@@ -76,6 +88,41 @@ impl ChessBoard {
         } else {
             self.en_passant = 0;
         }
+
+        self.is_white_to_play = !self.is_white_to_play;
+    }
+
+    fn make_move_promotion(&mut self, move_code: u16) {
+        // TODO implement: castling, promotion and sub-promotions
+        let to_index = move_code & 0b111111;
+        let to_index = to_index as usize;
+        let from_index = (move_code >> 6) & 0b111111;
+        let from_index = from_index as usize;
+        let color = self.is_white_to_play as usize;
+        let other_color = !self.is_white_to_play as usize;
+        let move_xor = (1 << to_index) | (1 << from_index);
+        let move_from_index = 1 << from_index;
+        let move_to_index = 1 << to_index;
+        let to_promotion = (move_code >> 12) & 0b11;
+
+        // takes
+        self.board |= move_to_index;
+        self.pieces[self.pieces_by_index[to_index] as usize] &= !move_to_index;
+        self.players[other_color] &= !move_to_index;
+
+        self.pieces[self.pieces_by_index[from_index] as usize] ^= move_from_index;
+        self.board ^= move_from_index;
+        self.players[color] ^= move_xor;
+
+        // promotion
+        let promotion_piece_type =
+            self.pieces_by_index[from_index] as usize - 4 + to_promotion as usize;
+        self.pieces[promotion_piece_type] ^= move_to_index;
+
+        self.pieces_by_index[from_index] = TypePiece::Empty;
+
+        // update en-passant
+        self.en_passant = 0;
 
         self.is_white_to_play = !self.is_white_to_play;
     }

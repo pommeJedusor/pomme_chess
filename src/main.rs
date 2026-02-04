@@ -141,18 +141,61 @@ fn get_starting_chessboard() -> ChessBoard {
     };
 }
 
+fn show_current_chessboard_state(chessboard: &ChessBoard) {
+    println!("chessboard");
+    print_mask(chessboard.board);
+    println!("white pieces");
+    print_mask(chessboard.players[1]);
+    println!("black pieces");
+    print_mask(chessboard.players[0]);
+    for (i, name) in [
+        "white king",
+        "white queen",
+        "white rook",
+        "white bishop",
+        "white knight",
+        "white pawn",
+        "black king",
+        "black queen",
+        "black rook",
+        "black bishop",
+        "black knight",
+        "black pawn",
+    ]
+    .iter()
+    .enumerate()
+    {
+        println!("{}", name);
+        print_mask(chessboard.pieces[i]);
+    }
+}
+
 fn main() {
     let ma = binary_mask::generate_main_hashtables();
     let mut chessboard = get_starting_chessboard();
     println!("{:?}", chessboard.get_fen());
     // white en passant
-    chessboard.make_move(24 | (48 << 6));
-    chessboard.make_move(25 | (9 << 6));
-    chessboard.make_move(chessboard.get_moves(&ma)[1]);
+    //chessboard.make_move(24 | (48 << 6));
+    //chessboard.make_move(25 | (9 << 6));
+    //chessboard.make_move(chessboard.get_moves(&ma)[1]);
     // black en passant
     //chessboard.is_white_to_play = false;
     //chessboard.make_move(32 | (8 << 6));
     //chessboard.make_move(33 | (49 << 6));
     //chessboard.make_move(chessboard.get_moves(&ma)[22]);
-    print_mask(chessboard.board);
+    // white promotion
+    //chessboard.make_move(8 | (48 << 6));
+    //chessboard.make_move(16 | (0 << 6));
+    //let moves = chessboard.get_moves(&ma);
+    //println!("{:?}", moves);
+    //chessboard.make_move(moves[7]);
+    //show_current_chessboard_state(&chessboard);
+    // black promotion
+    chessboard.is_white_to_play = false;
+    chessboard.make_move(48 | (8 << 6));
+    chessboard.make_move(40 | (56 << 6));
+    let moves = chessboard.get_moves(&ma);
+    println!("{:?}", moves);
+    chessboard.make_move(moves[23]);
+    show_current_chessboard_state(&chessboard);
 }
