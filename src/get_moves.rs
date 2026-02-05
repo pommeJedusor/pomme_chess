@@ -121,9 +121,25 @@ impl ChessBoard {
     }
 
     fn get_king_moves(&self, index: u8, ma: &binary_mask::MainHashtables, player: u64) -> Vec<u16> {
-        // TODO add castling
+        let king_side_mask = [
+            0b1100000,
+            0b110000000000000000000000000000000000000000000000000000000000000,
+        ];
+        let queen_side_mask = [
+            0b1110,
+            0b111000000000000000000000000000000000000000000000000000000000,
+        ];
+        let color = self.is_white_to_play as usize;
+        let other_color = !self.is_white_to_play as u16;
         let king_moves = ma.king_move_masks[index as usize];
-        move_mask_to_u16(index as u8, king_moves & player ^ king_moves)
+        let mut moves = move_mask_to_u16(index as u8, king_moves & player ^ king_moves);
+        if self.king_side_castle[color] && self.board & king_side_mask[color] == 0 {
+            moves.push((01 << 14) | (other_color << 13));
+        }
+        if self.queen_side_castle[color] && self.board & queen_side_mask[color] == 0 {
+            moves.push((01 << 14) | (other_color << 13) | (1 << 12));
+        }
+        moves
     }
 
     pub fn get_moves(&self, ma: &binary_mask::MainHashtables) -> Vec<u16> {

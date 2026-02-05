@@ -1,4 +1,4 @@
-use crate::{ChessBoard, TypePiece};
+use crate::ChessBoard;
 
 fn index_to_square(index: usize) -> String {
     let mut result = String::new();
@@ -12,7 +12,6 @@ fn index_to_square(index: usize) -> String {
 }
 
 pub fn get_notation_from_move(move_code: u16) -> String {
-    let mut s = String::new();
     let to_index = move_code & 0b111111;
     let from_index = (move_code >> 6) & 0b111111;
     index_to_square(from_index as usize) + &index_to_square(to_index as usize)
@@ -45,16 +44,16 @@ impl ChessBoard {
 
         // castles
         let mut fen_castles = String::new();
-        if self.player_king_side_castle {
+        if self.king_side_castle[1] {
             fen_castles.push_str("K");
         }
-        if self.player_queen_side_castle {
+        if self.queen_side_castle[1] {
             fen_castles.push_str("Q");
         }
-        if self.opponent_king_side_castle {
+        if self.king_side_castle[0] {
             fen_castles.push_str("k");
         }
-        if self.opponent_queen_side_castle {
+        if self.queen_side_castle[0] {
             fen_castles.push_str("q");
         }
 
