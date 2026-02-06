@@ -1,4 +1,4 @@
-use crate::binary_mask::print_mask;
+use crate::{binary_mask::print_mask, get_moves::MovesStruct};
 
 pub mod binary_mask;
 pub mod get_moves;
@@ -169,10 +169,13 @@ fn show_current_chessboard_state(chessboard: &ChessBoard) {
 
 fn main() {
     let ma = binary_mask::generate_main_hashtables();
+    let mut moves = MovesStruct::init();
     let mut chessboard = get_starting_chessboard();
     println!("{:?}", chessboard.get_fen());
     //chessboard.make_move(16384);
     chessboard.make_move(20480);
     //chessboard.make_move(24576);
     chessboard.make_move(28672);
+    chessboard.get_moves(&ma, &mut moves);
+    println!("{:?}", moves.moves);
 }
