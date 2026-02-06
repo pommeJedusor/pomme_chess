@@ -3,6 +3,7 @@ use crate::binary_mask;
 use crate::binary_mask::MainHashtables;
 
 pub struct MovesStruct {
+    // the max number of possible moves in a obtainable chess position is 218
     pub moves: [u16; 255],
     pub move_number: u8,
 }
